@@ -4,6 +4,7 @@ const express = require('express')
 const app = express()
 const { execShellCommand } = require('./parsers/getNodeStatus')
 const { findDeadNodes, isNodeDead } = require('./parsers/getDeadNodes')
+const { formattedDateNow } = require('./parsers/getTimestamp')
 const { exec } = require('child_process');
 
 app.get("/", (req, res) => {
@@ -36,7 +37,7 @@ app.get('/restart/:id', async (req, res) => {
     // get only live nodes
     const cmdLive = 'docker ps --format "{{.ID}}|{{.Names}}|{{.Status}}|||"'
 
-    console.log("req.params.id: " + req.params.id)
+    // console.log("req.params.id: " + req.params.id)
 
     try {
         await execShellCommand(cmdAll).then(nodes => { allNodes = nodes })    
@@ -49,17 +50,18 @@ app.get('/restart/:id', async (req, res) => {
             exec(cmd, (error, stdout, stderr) => {
                 if (error) {
                     console.warn(error);
-                    res.status(201).json({message: `Dead node found but could not be restarted. ${error}`})
+                    res.status(201).json({message: `Dead node found but could not be restarted. Error: ${error}`})
                 }
     
                 if (stdout) {
                     console.log(stdout) 
-                    res.status(201).json({message: `Node restarted. ${stdout}`})
+                    let time = formattedDateNow()
+                    res.status(201).json({message: `Node ${req.params.id} restarted on ${time}`})
                 }
 
                 if (stderr) {
                     console.warn(stderr) 
-                    res.status(201).json({message: `Dead node found but could not be restarted. ${stderr}`})
+                    res.status(201).json({message: `Dead node found but could not be restarted. Error: ${stderr}`})
                 }
             });   
         } else {
