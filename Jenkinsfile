@@ -68,10 +68,11 @@ pipeline {
                         ssh -i /var/jenkins_home/.ssh/website_deploy_rsa_key ${WEBSITE} "docker run -d \
                         -p 5800:5800 \
                         --rm \
-                        --name capstone-agent-restart \           
+                        --name capstone-agent-restart \
                         --network helpmybabies \
                         -v /var/run/docker.sock:/var/run/docker.sock \
                         stoicllama/capstone-agent-restart:${version}
+
 
                         docker ps
                         "
