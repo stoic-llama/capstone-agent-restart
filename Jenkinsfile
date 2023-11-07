@@ -7,15 +7,14 @@ pipeline {
     stages {
         stage("login") {
             steps {
-                // echo 'authenticating into jenkins server...'
+                echo 'authenticating into jenkins server...'
+                sh 'docker login'
                 // sh 'docker login registry.digitalocean.com'
                 
                 // note you need to manually add token for capstone-ccsu once 
                 // in Jenkins conatiner that is in the droplet
                 // Refer to "API" tab in Digital Ocean
                 // sh 'doctl auth init --context capstone-ccsu'  
-
-                echo 'no need to login to a private image repository...'
             }
         }
 
