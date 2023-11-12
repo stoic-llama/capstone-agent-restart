@@ -50,9 +50,11 @@ app.get('/restart/:id', async (req, res) => {
             exec(cmd, (error, stdout, stderr) => {
                 if (error) {
                     console.warn(error);
+                    let time = formattedDateNow()
                     res.status(400).json({
                         message: `Dead node found but could not be restarted. Error: ${error}`,
-                        restartStatus: 'Fail'
+                        restartStatus: 'Fail',
+                        timestamp: time
                     })
                 }
     
@@ -61,28 +63,35 @@ app.get('/restart/:id', async (req, res) => {
                     let time = formattedDateNow()
                     res.status(200).json({
                         message: `Node ${req.params.id} restarted on ${time}`,
-                        restartStatus: 'Success'
+                        restartStatus: 'Success',
+                        timestamp: time
                     })
                 }
 
                 if (stderr) {
                     console.warn(stderr) 
+                    let time = formattedDateNow()
                     res.status(400).json({
                         message: `Dead node found but could not be restarted. Error: ${stderr}`,
-                        restartStatus: 'Fail'
+                        restartStatus: 'Fail',
+                        timestamp: time
                     })
                 }
             });   
         } else {
+            let time = formattedDateNow()
             res.status(400).json({
                 message: "Dead node not found",
-                restartStatus: 'Fail'
+                restartStatus: 'Fail',
+                timestamp: time
             })
         }
     } catch (err) {
+        let time = formattedDateNow()
         res.status(400).json({
             message: err.message,
-            restartStatus: 'Fail'
+            restartStatus: 'Fail',
+            timestamp: time
         })
     }
 })

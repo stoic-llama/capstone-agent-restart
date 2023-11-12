@@ -2,6 +2,7 @@ pipeline {
     agent any
     environment {
         version = '1.2'
+        containerName = 'capstone-agent-restart'
     }
 
     stages {
@@ -29,9 +30,9 @@ pipeline {
 
                 echo 'building the application...'
                 // sh 'doctl registry repo list-v2'
-                sh "docker build -t capstone-agent-restart:${version} ."
-                sh "docker tag capstone-agent-restart:${version} stoicllama/capstone-agent-restart:${version}"
-                sh "docker push stoicllama/capstone-agent-restart:${version}"
+                sh 'docker build -t "${containerName}:${version}" .'
+                sh 'docker tag "${containerName}:${version}" stoicllama/"${containerName}:${version}"'
+                sh 'docker push stoicllama/"${containerName}:${version}"'
                 // sh 'doctl registry repo list-v2'
             }
         }
@@ -45,41 +46,37 @@ pipeline {
         stage("deploy") {
             steps {
                 echo 'deploying the application...' 
+                
+                withCredentials([
+                    string(credentialsId: 'website', variable: 'WEBSITE'),
+                ]) {
+                    script {
+                        // Use SSH to check if the container exists. If not exists, catch error 
+                        // so Jenkins can continue.
+                        def containerExists = sh(script: 'ssh -i /var/jenkins_home/.ssh/website_deploy_rsa_key "${WEBSITE}" docker stop "${containerName}"', returnStatus: true)
+
+                        echo "containerExists: $containerExists"
+                    }
+                }
 
                 // Use the withCredentials block to access the credentials
                 // Note: need --rm when docker run.. so that docker stop can kill it cleanly
                 withCredentials([string(credentialsId: 'website', variable: 'WEBSITE')]) {
-                    sh 'ssh -i /var/jenkins_home/.ssh/website_deploy_rsa_key ${WEBSITE} "docker stop capstone-agent-restart"'
-
-                    // sh '''
-                    //     ssh -i /var/jenkins_home/.ssh/website_deploy_rsa_key ${WEBSITE} "docker run -d \
-                    //     -p 80:3700 \
-                    //     --rm \
-                    //     --name capstone-frontend \
-                    //     --network helpmybabies \
-                    //     registry.digitalocean.com/capstone-ccsu/capstone-frontend:${version}
-
-                    //     docker ps
-                    //     "
-                    // '''    
-
                     sh '''
                         ssh -i /var/jenkins_home/.ssh/website_deploy_rsa_key ${WEBSITE} "docker run -d \
                         -p 5800:5800 \
                         --rm \
-                        --name capstone-agent-restart \
+                        --name ${containerName} \
                         --network helpmybabies \
                         -v /var/run/docker.sock:/var/run/docker.sock \
-                        stoicllama/capstone-agent-restart:${version}
-
+                        stoicllama/${containerName}:${version}
 
                         docker ps
                         "
                     '''
-
-
                 }
             }
+
         }
     }
 
